@@ -45,7 +45,13 @@ def getOutputFilePrefix(analysisParameters):
     magFieldLabel = analysisParameters["magFieldLabel"]
     my_cmap       = analysisParameters["cmap"]
     contourLevels = analysisParameters["contourLevels"]
-    return year+"_"+monthday+"_"+series+"_"+magFieldLabel+"_"+my_cmap+"_"+str(contourLevels)
+    return magFieldLabel+"_"+year+"_"+monthday+"_"+series+"_"+my_cmap+"_"+str(contourLevels)
+
+def plotElectrodes(plt):
+    
+    
+    
+
            
 def runAnalysis(listOfAnalysisParameters):
     positions_subdir="2D_Control_Piezo_Linearencoder"
@@ -70,12 +76,12 @@ def runAnalysis(listOfAnalysisParameters):
         minZ          = analysisParameters["minZ"]
         maxZ          = analysisParameters["maxZ"]
         
-        outputPrefix  = getOutputFilePrefix(analysisParameters)
+        outputSuffix  = getOutputFilePrefix(analysisParameters)
         
         datadir=datapath+"/"+year+"/"+monthday+"/"+series+"/"
         
         print("looking for data in "+datadir)
-        print("       => saving to "+outDir+"/"+outputPrefix+"*")
+        print("       => saving to "+outDir+"/"+outputSuffix+"*")
         
         # read positions
         posfilePiezo=datadir+"/"+positions_subdir+"/path.dat"
@@ -167,33 +173,40 @@ def runAnalysis(listOfAnalysisParameters):
 #            plt.grid(True)
 #            plt.tight_layout()
 #            plt.show()
-            
+        
+        
+        
         
         #fig=plt.figure()     
         #plt.imshow(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[r_meshgrid[z0,0]-1, r_meshgrid[z0,-1]+1, z_meshgrid[z0,0]+1, z_meshgrid[-1,0]-1])
         #plt.contourf(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmap=my_cmap)
         #plt.pcolormesh(cornersX, cornersY, phif, cmap=my_cmap)
-        rangeStrPhiF= str(minPhiF)+"_"+str(maxPhiF)
         plt.figure()
         plt.contourf(gridX, gridY, phif, cmap=plt.get_cmap(my_cmap), levels=contourLevels, vmin=minPhiF, vmax=maxPhiF)
         cb=plt.colorbar()
+        cb.formatter.set_scientific(True)
+        cb.formatter.set_powerlimits((-2,2))
+        cb.update_ticks() 
         cb.set_label("floating potential / V")
         plt.xlabel("r / mm")
         plt.ylabel("z / mm")
         plt.xlim([minR, maxR])
         plt.ylim([minZ, maxZ])
         plt.title(magFieldLabel)
+        plt.axis("equal")
         plt.tight_layout()
-        plt.savefig(outDir+"/"+outputPrefix+"_PhiF_"+rangeStrPhiF+".png")
+        plt.savefig(outDir+"/PhiF_"+outputSuffix+".png")
 #        cid = fig.canvas.mpl_connect('button_press_event', onclick)
         
         #fig2=plt.figure()     
         #plt.imshow(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[r_meshgrid[z0,0], r_meshgrid[z0,-1], z_meshgrid[z0,0], z_meshgrid[-1,0]])
         #plt.contourf(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmp=my_cmap)
-        rangeStrIisat= str(minIisat)+"_"+str(maxIisat)
         plt.figure()
         plt.contourf(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), levels=contourLevels, vmin=minIisat, vmax=maxIisat)
         cb=plt.colorbar()
+        cb.formatter.set_scientific(True)
+        cb.formatter.set_powerlimits((-2,2))
+        cb.update_ticks() 
         cb.set_clim(vmin=minIisat, vmax=maxIisat)
         cb.set_label("ion saturation current (at 30V below phif) / uA")
         plt.xlabel("r / mm")
@@ -201,8 +214,9 @@ def runAnalysis(listOfAnalysisParameters):
         plt.xlim([minR, maxR])
         plt.ylim([minZ, maxZ])
         plt.title(magFieldLabel)
+        plt.axis("equal")
         plt.tight_layout()
-        plt.savefig(outDir+"/"+outputPrefix+"_Iisat_"+rangeStrIisat+".png")
+        plt.savefig(outDir+"/Iisat_"+outputSuffix+".png")
 #        cid = fig2.canvas.mpl_connect('button_press_event', onclick)
 
 
