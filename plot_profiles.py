@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 #datapath="/run/media/jonathan/Stick16G/Messdaten_2D_Langmuir/"
 
 analysisParameters = {}
-analysisParameters["datapath"]="/home/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018/"
-analysisParameters["outDir"] = "/home/jonathan/Uni/Forschung/03_Auswertung/2D_Langmuir_Juli2018/"
+analysisParameters["datapath"]="/home/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018"
+analysisParameters["outDir"] = "/home/jonathan/Uni/Forschung/03_Auswertung/2D_Langmuir_Juli2018/out"
 analysisParameters["cmap"] = "jet"
 analysisParameters["contourLevels"] = 20
 analysisParameters["year"]="2018"
@@ -35,7 +35,7 @@ def getOutputFilePrefix(analysisParameters):
 
 def runAnalysis(listOfAnalysisParameters):
     positions_subdir="2D_Control_Piezo_Linearencoder"
-    probechar_subdir="Langmuir_Kennlinie_SM2400/"
+    probechar_subdir="Langmuir_Kennlinie_SM2400"
     
     for analysisParameters in listOfAnalysisParameters:
         
