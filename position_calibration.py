@@ -54,10 +54,12 @@ plt.ylabel("pos from image")
 #%%
 
 xOff = 28.5-30.0 # r
-xScale = 0.9
+#xScale = 0.9
+xScale = 1.0 # maybe camera viewing angle error?
 
 yOff = 49 # z
-yScale = -0.9
+#yScale = -0.9
+yScale = -1.0 # maybe camera viewing angle error?
 
 realX = scale(posPiezo[:,0], xOff, xScale)
 realY = scale(posPiezo[:,1], yOff, yScale)
