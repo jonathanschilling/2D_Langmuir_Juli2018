@@ -18,10 +18,11 @@ analysisParameters = {}
 analysisParameters["datapath"]="/home/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018"
 analysisParameters["outDir"] = "/home/jonathan/Uni/Forschung/03_Auswertung/2D_Langmuir_Juli2018/out"
 analysisParameters["cmap"] = "jet"
-analysisParameters["contourLevels"] = 20
-analysisParameters["minPhiF"] = 45 # V
+analysisParameters["contourLevels_PhiF"] = 40 + 1
+analysisParameters["contourLevels_Iisat"] = 20 + 1
+analysisParameters["minPhiF"] = 60 # V
 analysisParameters["maxPhiF"] = 80 # V
-analysisParameters["minIisat"] = 0 # uA
+analysisParameters["minIisat"] =  0 # uA
 analysisParameters["maxIisat"] = 20 # uA
 analysisParameters["minR"] = -5 # mm
 analysisParameters["maxR"] = 40 # mm
@@ -35,10 +36,10 @@ analysisParameters["monthday"]="0716"
 analysisParameters["series"]="001"
 listOfAnalysisParameters.append(deepcopy(analysisParameters))
 
-#analysisParameters["magFieldLabel"] = "50 mT"
-#analysisParameters["monthday"]="0716"
-#analysisParameters["series"]="007" # and 008
-#listOfAnalysisParameters.append(analysisParameters)
+analysisParameters["magFieldLabel"] = "0.05 T"
+analysisParameters["monthday"]="0716"
+analysisParameters["series"]="007_008_merged"
+listOfAnalysisParameters.append(deepcopy(analysisParameters))
 
 analysisParameters["magFieldLabel"] = "0.5 T"
 analysisParameters["monthday"]="0716"
@@ -64,8 +65,9 @@ def getOutputFilePrefix(analysisParameters):
     series        = analysisParameters["series"].replace(" ", "_")
     magFieldLabel = analysisParameters["magFieldLabel"].replace(" ", "_")
     my_cmap       = analysisParameters["cmap"].replace(" ", "_")
-    contourLevels = str(analysisParameters["contourLevels"]).replace(" ", "_")
-    return magFieldLabel+"_"+year+"_"+monthday+"_"+series+"_"+my_cmap+"_"+contourLevels
+    contourLevels_PhiF = str(analysisParameters["contourLevels_PhiF"]).replace(" ", "_")
+    contourLevels_Iisat = str(analysisParameters["contourLevels_Iisat"]).replace(" ", "_")
+    return magFieldLabel+"_"+year+"_"+monthday+"_"+series+"_"+my_cmap+"_"+contourLevels_PhiF+"_"+contourLevels_Iisat
 
 def plotElectrodes(plt):
     stainlessSteelColor="#333333"
@@ -112,7 +114,8 @@ def runAnalysis(listOfAnalysisParameters):
         magFieldLabel = analysisParameters["magFieldLabel"]
         outDir        = analysisParameters["outDir"]
         my_cmap       = analysisParameters["cmap"]
-        contourLevels = analysisParameters["contourLevels"]
+        contourLevels_PhiF = analysisParameters["contourLevels_PhiF"]
+        contourLevels_Iisat = analysisParameters["contourLevels_Iisat"]
         minPhiF       = analysisParameters["minPhiF"]
         maxPhiF       = analysisParameters["maxPhiF"]
         minIisat      = analysisParameters["minIisat"]
@@ -189,11 +192,12 @@ def runAnalysis(listOfAnalysisParameters):
         #        char_data[:,0]+=99.6
                 
                 chars.append(char_data)
-                phif_here=np.interp(0,char_data[:,1],char_data[:,0])
+                phif_here=np.interp(0, char_data[:,1],char_data[:,0])
+#                phif_here=np.interp(1e-6,char_data[:,1],char_data[:,0])
                 phif[z,r]=phif_here
                 
-                #iisat_here=np.interp(phif_here-30.0, char_data[:,0], char_data[:,1])
-                iisat_here=np.interp(0.0, char_data[:,0], char_data[:,1])
+#                iisat_here=np.interp(phif_here-50.0, char_data[:,0], char_data[:,1])
+                iisat_here=np.interp(-30.0, char_data[:,0], char_data[:,1])
                 iisat[z,r]=iisat_here
                 
                 i+=1
@@ -230,11 +234,12 @@ def runAnalysis(listOfAnalysisParameters):
         #plt.contourf(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmap=my_cmap)
         #plt.pcolormesh(cornersX, cornersY, phif, cmap=my_cmap)
         plt.figure()
-        plt.contourf(gridX, gridY, phif, cmap=plt.get_cmap(my_cmap), levels=contourLevels, vmin=minPhiF, vmax=maxPhiF)
-        m = cm.ScalarMappable(cmap=my_cmap)
+        CS=plt.contourf(gridX, gridY, phif, cmap=plt.get_cmap(my_cmap), levels=contourLevels_PhiF+1, vmin=minPhiF, vmax=maxPhiF)
+        m = cm.ScalarMappable(cmap=my_cmap) # from https://stackoverflow.com/questions/43150687/colorbar-limits-are-not-respecting-set-vmin-vmax-in-plt-contourf-how-can-i-more
         m.set_array(phif)
         m.set_clim(minPhiF, maxPhiF)
-        cb=plt.colorbar(m, boundaries=np.linspace(minPhiF, maxPhiF, contourLevels))
+        cb=plt.colorbar(m, boundaries=np.linspace(minPhiF, maxPhiF, contourLevels_PhiF))
+#        cb = clippedcolorbar(CS, extend='neither')
         cb.formatter.set_scientific(True)
         cb.formatter.set_powerlimits((-2,2))
         cb.update_ticks() 
@@ -255,15 +260,16 @@ def runAnalysis(listOfAnalysisParameters):
         #plt.contourf(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmp=my_cmap)
         plt.figure()
         #plt.pcolormesh(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), vmin=minIisat, vmax=maxIisat)
-        plt.contourf(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), levels=contourLevels, vmin=minIisat, vmax=maxIisat)
+        CS=plt.contourf(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), levels=contourLevels_Iisat+1, vmin=minIisat, vmax=maxIisat)
         m = cm.ScalarMappable(cmap=my_cmap)
         m.set_array(iisat*-1e6)
         m.set_clim(minIisat, maxIisat)
-        cb=plt.colorbar(m, boundaries=np.linspace(minIisat, maxIisat, contourLevels))
+        cb=plt.colorbar(m, boundaries=np.linspace(minIisat, maxIisat, contourLevels_Iisat))
+#        cb = clippedcolorbar(CS, extend='neither')
         cb.formatter.set_scientific(True)
         cb.formatter.set_powerlimits((-2,2))
         cb.update_ticks() 
-        cb.set_label("ion saturation current (at 30V below phif) / uA")
+        cb.set_label("ion saturation current (at -30V) / uA")
         plt.xlabel("r / mm")
         plt.ylabel("z / mm")
         plotElectrodes(plt)
