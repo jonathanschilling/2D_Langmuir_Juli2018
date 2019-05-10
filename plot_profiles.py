@@ -1,28 +1,42 @@
 # -*- coding: utf-8 -*-
-"""
-read 2d Langmuir measurement and plot profile of floating potential
-"""
+#
+# read 2d Langmuir measurement and plot profile of floating potential
+# 
+# Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
+
 
 import numpy as np
 import matplotlib.pyplot as plt
 
+listOfAnalysisParameters = []
 
-
-#datapath="/run/media/jonathan/Stick16G/Messdaten_2D_Langmuir/"
-
+# common parameters
 analysisParameters = {}
 analysisParameters["datapath"]="/home/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018"
 analysisParameters["outDir"] = "/home/jonathan/Uni/Forschung/03_Auswertung/2D_Langmuir_Juli2018/out"
 analysisParameters["cmap"] = "jet"
 analysisParameters["contourLevels"] = 20
+analysisParameters["minPhiF"] = 45 # V
+analysisParameters["maxPhiF"] = 80 # V
+analysisParameters["minIisat"] = 0 # uA
+analysisParameters["maxIisat"] = 20 # uA
+analysisParameters["minR"] = -5 # mm
+analysisParameters["maxR"] = 40 # mm
+analysisParameters["minZ"] =  0 # mm
+analysisParameters["maxZ"] = 30 # mm
 analysisParameters["year"]="2018"
+
+# build individual runs
 analysisParameters["monthday"]="0716"
 analysisParameters["series"]="002"
 analysisParameters["magFieldLabel"] = "500mT"
-
-
-listOfAnalysisParameters = []
 listOfAnalysisParameters.append(analysisParameters)
+
+
+
+
+
+########## execution below ##########
 
 def getOutputFilePrefix(analysisParameters):
     year          = analysisParameters["year"]
@@ -32,7 +46,7 @@ def getOutputFilePrefix(analysisParameters):
     my_cmap       = analysisParameters["cmap"]
     contourLevels = analysisParameters["contourLevels"]
     return year+"_"+monthday+"_"+series+"_"+magFieldLabel+"_"+my_cmap+"_"+str(contourLevels)
-
+           
 def runAnalysis(listOfAnalysisParameters):
     positions_subdir="2D_Control_Piezo_Linearencoder"
     probechar_subdir="Langmuir_Kennlinie_SM2400"
@@ -47,8 +61,16 @@ def runAnalysis(listOfAnalysisParameters):
         outDir        = analysisParameters["outDir"]
         my_cmap       = analysisParameters["cmap"]
         contourLevels = analysisParameters["contourLevels"]
-        outputPrefix  = getOutputFilePrefix(analysisParameters)
+        minPhiF       = analysisParameters["minPhiF"]
+        maxPhiF       = analysisParameters["maxPhiF"]
+        minIisat      = analysisParameters["minIisat"]
+        maxIisat      = analysisParameters["maxIisat"]
+        minR          = analysisParameters["minR"]
+        maxR          = analysisParameters["maxR"]
+        minZ          = analysisParameters["minZ"]
+        maxZ          = analysisParameters["maxZ"]
         
+        outputPrefix  = getOutputFilePrefix(analysisParameters)
         
         datadir=datapath+"/"+year+"/"+monthday+"/"+series+"/"
         
@@ -122,9 +144,7 @@ def runAnalysis(listOfAnalysisParameters):
                 
                 i+=1
                 
-        #%%
-           
-        
+
         
         
 #        def onclick(event):
@@ -153,29 +173,36 @@ def runAnalysis(listOfAnalysisParameters):
         #plt.imshow(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[r_meshgrid[z0,0]-1, r_meshgrid[z0,-1]+1, z_meshgrid[z0,0]+1, z_meshgrid[-1,0]-1])
         #plt.contourf(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmap=my_cmap)
         #plt.pcolormesh(cornersX, cornersY, phif, cmap=my_cmap)
+        rangeStrPhiF= str(minPhiF)+"_"+str(maxPhiF)
         plt.figure()
-        plt.contourf(gridX, gridY, phif, cmap=plt.get_cmap(my_cmap), levels=contourLevels)
+        plt.contourf(gridX, gridY, phif, cmap=plt.get_cmap(my_cmap), levels=contourLevels, vmin=minPhiF, vmax=maxPhiF)
         cb=plt.colorbar()
         cb.set_label("floating potential / V")
         plt.xlabel("r / mm")
         plt.ylabel("z / mm")
+        plt.xlim([minR, maxR])
+        plt.ylim([minZ, maxZ])
         plt.title(magFieldLabel)
         plt.tight_layout()
-        plt.savefig(outDir+"/"+outputPrefix+"_PhiF.png")
+        plt.savefig(outDir+"/"+outputPrefix+"_PhiF_"+rangeStrPhiF+".png")
 #        cid = fig.canvas.mpl_connect('button_press_event', onclick)
         
         #fig2=plt.figure()     
         #plt.imshow(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[r_meshgrid[z0,0], r_meshgrid[z0,-1], z_meshgrid[z0,0], z_meshgrid[-1,0]])
         #plt.contourf(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmp=my_cmap)
+        rangeStrIisat= str(minIisat)+"_"+str(maxIisat)
         plt.figure()
-        plt.contourf(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), levels=contourLevels)
+        plt.contourf(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), levels=contourLevels, vmin=minIisat, vmax=maxIisat)
         cb=plt.colorbar()
+        cb.set_clim(vmin=minIisat, vmax=maxIisat)
         cb.set_label("ion saturation current (at 30V below phif) / uA")
         plt.xlabel("r / mm")
         plt.ylabel("z / mm")
+        plt.xlim([minR, maxR])
+        plt.ylim([minZ, maxZ])
         plt.title(magFieldLabel)
         plt.tight_layout()
-        plt.savefig(outDir+"/"+outputPrefix+"_Iisat.png")
+        plt.savefig(outDir+"/"+outputPrefix+"_Iisat_"+rangeStrIisat+".png")
 #        cid = fig2.canvas.mpl_connect('button_press_event', onclick)
 
 
