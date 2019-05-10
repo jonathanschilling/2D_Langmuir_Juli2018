@@ -7,6 +7,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+
+from copy import deepcopy
 
 listOfAnalysisParameters = []
 
@@ -27,25 +30,42 @@ analysisParameters["maxZ"] = 30 # mm
 analysisParameters["year"]="2018"
 
 # build individual runs
+analysisParameters["magFieldLabel"] = "0.0 T"
+analysisParameters["monthday"]="0716"
+analysisParameters["series"]="001"
+listOfAnalysisParameters.append(deepcopy(analysisParameters))
+
+#analysisParameters["magFieldLabel"] = "50 mT"
+#analysisParameters["monthday"]="0716"
+#analysisParameters["series"]="007" # and 008
+#listOfAnalysisParameters.append(analysisParameters)
+
+analysisParameters["magFieldLabel"] = "0.5 T"
 analysisParameters["monthday"]="0716"
 analysisParameters["series"]="002"
-analysisParameters["magFieldLabel"] = "500mT"
-listOfAnalysisParameters.append(analysisParameters)
+listOfAnalysisParameters.append(deepcopy(analysisParameters))
 
+analysisParameters["magFieldLabel"] = "1.5 T"
+analysisParameters["monthday"]="0716"
+analysisParameters["series"]="004"
+listOfAnalysisParameters.append(deepcopy(analysisParameters))
 
-
+analysisParameters["magFieldLabel"] = "4.0 T"
+analysisParameters["monthday"]="0716"
+analysisParameters["series"]="005"
+listOfAnalysisParameters.append(deepcopy(analysisParameters))
 
 
 ########## execution below ##########
 
 def getOutputFilePrefix(analysisParameters):
-    year          = analysisParameters["year"]
-    monthday      = analysisParameters["monthday"]
-    series        = analysisParameters["series"]
-    magFieldLabel = analysisParameters["magFieldLabel"]
-    my_cmap       = analysisParameters["cmap"]
-    contourLevels = analysisParameters["contourLevels"]
-    return magFieldLabel+"_"+year+"_"+monthday+"_"+series+"_"+my_cmap+"_"+str(contourLevels)
+    year          = analysisParameters["year"].replace(" ", "_")
+    monthday      = analysisParameters["monthday"].replace(" ", "_")
+    series        = analysisParameters["series"].replace(" ", "_")
+    magFieldLabel = analysisParameters["magFieldLabel"].replace(" ", "_")
+    my_cmap       = analysisParameters["cmap"].replace(" ", "_")
+    contourLevels = str(analysisParameters["contourLevels"]).replace(" ", "_")
+    return magFieldLabel+"_"+year+"_"+monthday+"_"+series+"_"+my_cmap+"_"+contourLevels
 
 def plotElectrodes(plt):
     stainlessSteelColor="#333333"
@@ -78,9 +98,7 @@ def plotElectrodes(plt):
              [ 35.0,  35.0,  40.0,  40.0], macorColor)
     plt.fill([ 32.0,  30.0,  30.0,  32.0], \
              [ 35.0,  35.0,  40.0,  40.0], macorColor)
-    
 
-           
 def runAnalysis(listOfAnalysisParameters):
     positions_subdir="2D_Control_Piezo_Linearencoder"
     probechar_subdir="Langmuir_Kennlinie_SM2400"
@@ -116,10 +134,12 @@ def runAnalysis(listOfAnalysisParameters):
         posPiezo = np.loadtxt(posfilePiezo)
         
         xOff = 28.5-30.0 # r
-        xScale = 0.9
+        #xScale = 0.9 # maybe camera viewing angle error?
+        xScale = 1.0
         
-        yOff = 49 # z
-        yScale = -0.9
+        yOff = 54 # z
+        #yScale = -0.9 # maybe camera viewing angle error?
+        yScale = -1.0
         
         def scale(xLinEnc, off, scale):
             return np.add(np.multiply(xLinEnc, scale), off)
@@ -211,7 +231,10 @@ def runAnalysis(listOfAnalysisParameters):
         #plt.pcolormesh(cornersX, cornersY, phif, cmap=my_cmap)
         plt.figure()
         plt.contourf(gridX, gridY, phif, cmap=plt.get_cmap(my_cmap), levels=contourLevels, vmin=minPhiF, vmax=maxPhiF)
-        cb=plt.colorbar()
+        m = cm.ScalarMappable(cmap=my_cmap)
+        m.set_array(phif)
+        m.set_clim(minPhiF, maxPhiF)
+        cb=plt.colorbar(m, boundaries=np.linspace(minPhiF, maxPhiF, contourLevels))
         cb.formatter.set_scientific(True)
         cb.formatter.set_powerlimits((-2,2))
         cb.update_ticks() 
@@ -231,12 +254,15 @@ def runAnalysis(listOfAnalysisParameters):
         #plt.imshow(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[r_meshgrid[z0,0], r_meshgrid[z0,-1], z_meshgrid[z0,0], z_meshgrid[-1,0]])
         #plt.contourf(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmp=my_cmap)
         plt.figure()
+        #plt.pcolormesh(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), vmin=minIisat, vmax=maxIisat)
         plt.contourf(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), levels=contourLevels, vmin=minIisat, vmax=maxIisat)
-        cb=plt.colorbar()
+        m = cm.ScalarMappable(cmap=my_cmap)
+        m.set_array(iisat*-1e6)
+        m.set_clim(minIisat, maxIisat)
+        cb=plt.colorbar(m, boundaries=np.linspace(minIisat, maxIisat, contourLevels))
         cb.formatter.set_scientific(True)
         cb.formatter.set_powerlimits((-2,2))
         cb.update_ticks() 
-        cb.set_clim(vmin=minIisat, vmax=maxIisat)
         cb.set_label("ion saturation current (at 30V below phif) / uA")
         plt.xlabel("r / mm")
         plt.ylabel("z / mm")

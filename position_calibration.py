@@ -38,7 +38,7 @@ def scale(xLinEnc, off, scale):
 #%%
 plt.figure()
 plt.plot(posPiezo[:,0], allX, '+')
-plt.plot(posPiezo[:,0], scale(posPiezo[:,0], 28.5, 0.9), '+')
+plt.plot(posPiezo[:,0], scale(posPiezo[:,0], 28.0, 1.0), '+')
 plt.title("X scaling")
 plt.xlabel("pos from linear encoders")
 plt.ylabel("pos from image")
@@ -47,7 +47,7 @@ plt.ylabel("pos from image")
 plt.figure()
 plt.title("Y scaling")
 plt.plot(posPiezo[:,1], allY, '+')
-plt.plot(posPiezo[:,1], scale(posPiezo[:,1], 49, -0.9), '+')
+plt.plot(posPiezo[:,1], scale(posPiezo[:,1], 54, -1.0), '+')
 plt.xlabel("pos from linear encoders")
 plt.ylabel("pos from image")
 
