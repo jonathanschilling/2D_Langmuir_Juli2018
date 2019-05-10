@@ -48,8 +48,36 @@ def getOutputFilePrefix(analysisParameters):
     return magFieldLabel+"_"+year+"_"+monthday+"_"+series+"_"+my_cmap+"_"+str(contourLevels)
 
 def plotElectrodes(plt):
+    stainlessSteelColor="#333333"
+    macorColor="#AAAAAA"
     
+    # bottom electrode
+    plt.fill([-30.0,  30.0,  30.0, -30.0], \
+             [  0.0,   0.0, -10.0, -10.0], stainlessSteelColor)
+    # bottom shield
+    plt.fill([-33.5, -32.0, -32.0, -33.5], \
+             [  0.0,   0.0, -10.0, -10.0], stainlessSteelColor)
+    plt.fill([ 33.5,  32.0,  32.0,  33.5], \
+             [  0.0,   0.0, -10.0, -10.0], stainlessSteelColor)
+    # bottom Macor insulation
+    plt.fill([-32.0, -30.0, -30.0, -32.0], \
+             [- 5.0, - 5.0, -10.0, -10.0], macorColor)
+    plt.fill([ 32.0,  30.0,  30.0,  32.0], \
+             [- 5.0, - 5.0, -10.0, -10.0], macorColor)
     
+    # top electrode
+    plt.fill([-30.0,  30.0,  30.0, -30.0], \
+             [ 30.0,  30.0,  40.0,  40.0], stainlessSteelColor)
+    # top shield
+    plt.fill([-33.5, -32.0, -32.0, -33.5], \
+             [ 30.0,  30.0,  40.0,  40.0], stainlessSteelColor)
+    plt.fill([ 33.5,  32.0,  32.0,  33.5], \
+             [ 30.0,  30.0,  40.0,  40.0], stainlessSteelColor)
+    # top Macor insulation
+    plt.fill([-32.0, -30.0, -30.0, -32.0], \
+             [ 35.0,  35.0,  40.0,  40.0], macorColor)
+    plt.fill([ 32.0,  30.0,  30.0,  32.0], \
+             [ 35.0,  35.0,  40.0,  40.0], macorColor)
     
 
            
@@ -190,10 +218,11 @@ def runAnalysis(listOfAnalysisParameters):
         cb.set_label("floating potential / V")
         plt.xlabel("r / mm")
         plt.ylabel("z / mm")
+        plotElectrodes(plt)
+        plt.axis("equal")
         plt.xlim([minR, maxR])
         plt.ylim([minZ, maxZ])
         plt.title(magFieldLabel)
-        plt.axis("equal")
         plt.tight_layout()
         plt.savefig(outDir+"/PhiF_"+outputSuffix+".png")
 #        cid = fig.canvas.mpl_connect('button_press_event', onclick)
@@ -211,10 +240,11 @@ def runAnalysis(listOfAnalysisParameters):
         cb.set_label("ion saturation current (at 30V below phif) / uA")
         plt.xlabel("r / mm")
         plt.ylabel("z / mm")
+        plotElectrodes(plt)
+        plt.axis("equal")
         plt.xlim([minR, maxR])
         plt.ylim([minZ, maxZ])
         plt.title(magFieldLabel)
-        plt.axis("equal")
         plt.tight_layout()
         plt.savefig(outDir+"/Iisat_"+outputSuffix+".png")
 #        cid = fig2.canvas.mpl_connect('button_press_event', onclick)
