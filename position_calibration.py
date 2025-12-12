@@ -9,8 +9,13 @@ Created on Thu May  9 12:59:47 2019
 import numpy as np
 import matplotlib.pyplot as plt
 
+from pathlib import Path
+
+# folder = Path("/home/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018")
+folder = Path("/data/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018")
+
 # positions from img_to_coord
-posfile = "/home/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018/2018/0716/005/ximea_QMH_main/positions.dat"
+posfile = folder / "2018" / "0716" / "005" / "ximea_QMH_main" / "positions.dat"
 
 # read positions from manual identification
 allImg = []
@@ -18,7 +23,7 @@ allX   = []
 allY   = []
 with open(posfile, "r") as f:
     for l in f.readlines():
-        
+
         lineparts = l.strip().split(" ")
         imgname = lineparts[0]
         xPos = np.double(lineparts[1])
@@ -29,7 +34,8 @@ with open(posfile, "r") as f:
         allY.append(yPos)
 
 # read positions from piezo positioning unit
-posfilePiezo = "/home/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018/2018/0716/005/2D_Control_Piezo_Linearencoder/path.dat"
+# posfilePiezo = "/home/jonathan/Uni/Forschung/01_Messdaten/Messdaten_2D_Langmuir_Juli2018/2018/0716/005/2D_Control_Piezo_Linearencoder/path.dat"
+posfilePiezo = folder / "2018" / "0716" / "005" / "2D_Control_Piezo_Linearencoder" / "path.dat"
 posPiezo = np.loadtxt(posfilePiezo)
 
 def scale(xLinEnc, off, scale):
@@ -87,6 +93,6 @@ plt.xlabel("r / mm")
 plt.ylabel("z / mm")
 plt.title("measured locations")
 
-
+plt.show()
 
 
