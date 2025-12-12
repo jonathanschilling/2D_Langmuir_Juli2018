@@ -20,10 +20,13 @@ analysisParameters["outDir"] = "/home/jonathan/Uni/Forschung/03_Auswertung/2D_La
 analysisParameters["cmap"] = "jet"
 analysisParameters["contourLevels_PhiF"] = 40 + 1
 analysisParameters["contourLevels_Iisat"] = 20 + 1
+analysisParameters["contourLevels_Te"] = 20 + 1
 analysisParameters["minPhiF"] = 60 # V
 analysisParameters["maxPhiF"] = 80 # V
 analysisParameters["minIisat"] =  0 # uA
 analysisParameters["maxIisat"] = 20 # uA
+analysisParameters["minTe"] = 2.0 # eV
+analysisParameters["maxTe"] = 4.0 # eV
 analysisParameters["minR"] = -5 # mm
 analysisParameters["maxR"] = 40 # mm
 analysisParameters["minZ"] =  0 # mm
@@ -36,25 +39,25 @@ analysisParameters["monthday"]="0716"
 analysisParameters["series"]="001"
 listOfAnalysisParameters.append(deepcopy(analysisParameters))
 
-analysisParameters["magFieldLabel"] = "0.05 T"
-analysisParameters["monthday"]="0716"
-analysisParameters["series"]="007_008_merged"
-listOfAnalysisParameters.append(deepcopy(analysisParameters))
-
-analysisParameters["magFieldLabel"] = "0.5 T"
-analysisParameters["monthday"]="0716"
-analysisParameters["series"]="002"
-listOfAnalysisParameters.append(deepcopy(analysisParameters))
-
-analysisParameters["magFieldLabel"] = "1.5 T"
-analysisParameters["monthday"]="0716"
-analysisParameters["series"]="004"
-listOfAnalysisParameters.append(deepcopy(analysisParameters))
-
-analysisParameters["magFieldLabel"] = "4.0 T"
-analysisParameters["monthday"]="0716"
-analysisParameters["series"]="005"
-listOfAnalysisParameters.append(deepcopy(analysisParameters))
+#analysisParameters["magFieldLabel"] = "0.05 T"
+#analysisParameters["monthday"]="0716"
+#analysisParameters["series"]="007_008_merged"
+#listOfAnalysisParameters.append(deepcopy(analysisParameters))
+#
+#analysisParameters["magFieldLabel"] = "0.5 T"
+#analysisParameters["monthday"]="0716"
+#analysisParameters["series"]="002"
+#listOfAnalysisParameters.append(deepcopy(analysisParameters))
+#
+#analysisParameters["magFieldLabel"] = "1.5 T"
+#analysisParameters["monthday"]="0716"
+#analysisParameters["series"]="004"
+#listOfAnalysisParameters.append(deepcopy(analysisParameters))
+#
+#analysisParameters["magFieldLabel"] = "4.0 T"
+#analysisParameters["monthday"]="0716"
+#analysisParameters["series"]="005"
+#listOfAnalysisParameters.append(deepcopy(analysisParameters))
 
 
 ########## execution below ##########
@@ -101,29 +104,40 @@ def plotElectrodes(plt):
     plt.fill([ 32.0,  30.0,  30.0,  32.0], \
              [ 35.0,  35.0,  40.0,  40.0], macorColor)
 
+from lmfit import Model
+
+def TeFun(x, I_ion, I_e, T_e):
+    #return I_ion + S_ion*x + I_e*np.exp((x-Phi_P)/T_e)
+    return I_ion + I_e*np.exp((x-80.0)/T_e)
+Te_model = Model(TeFun)
+
+
 def runAnalysis(listOfAnalysisParameters):
     positions_subdir="2D_Control_Piezo_Linearencoder"
     probechar_subdir="Langmuir_Kennlinie_SM2400"
     
     for analysisParameters in listOfAnalysisParameters:
         
-        datapath      = analysisParameters["datapath"]
-        year          = analysisParameters["year"]
-        monthday      = analysisParameters["monthday"]
-        series        = analysisParameters["series"]
-        magFieldLabel = analysisParameters["magFieldLabel"]
-        outDir        = analysisParameters["outDir"]
-        my_cmap       = analysisParameters["cmap"]
-        contourLevels_PhiF = analysisParameters["contourLevels_PhiF"]
+        datapath            = analysisParameters["datapath"]
+        year                = analysisParameters["year"]
+        monthday            = analysisParameters["monthday"]
+        series              = analysisParameters["series"]
+        magFieldLabel       = analysisParameters["magFieldLabel"]
+        outDir              = analysisParameters["outDir"]
+        my_cmap             = analysisParameters["cmap"]
+        contourLevels_PhiF  = analysisParameters["contourLevels_PhiF"]
         contourLevels_Iisat = analysisParameters["contourLevels_Iisat"]
-        minPhiF       = analysisParameters["minPhiF"]
-        maxPhiF       = analysisParameters["maxPhiF"]
-        minIisat      = analysisParameters["minIisat"]
-        maxIisat      = analysisParameters["maxIisat"]
-        minR          = analysisParameters["minR"]
-        maxR          = analysisParameters["maxR"]
-        minZ          = analysisParameters["minZ"]
-        maxZ          = analysisParameters["maxZ"]
+        contourLevels_Te = analysisParameters["contourLevels_Te"]
+        minPhiF             = analysisParameters["minPhiF"]
+        maxPhiF             = analysisParameters["maxPhiF"]
+        minIisat            = analysisParameters["minIisat"]
+        maxIisat            = analysisParameters["maxIisat"]
+        minTe            = analysisParameters["minTe"]
+        maxTe            = analysisParameters["maxTe"]
+        minR                = analysisParameters["minR"]
+        maxR                = analysisParameters["maxR"]
+        minZ                = analysisParameters["minZ"]
+        maxZ                = analysisParameters["maxZ"]
         
         outputSuffix  = getOutputFilePrefix(analysisParameters)
         
@@ -174,13 +188,21 @@ def runAnalysis(listOfAnalysisParameters):
         vacuum_meas_filename = datapath+"/"+year+"/0716/500mT_no_plasma.dat"
         vacuum_char = np.loadtxt(vacuum_meas_filename)
 
+
+#        r_profile_r = []
+#        r_profile_Te = []
+
+
+#        plt.figure()
+
         # read probe characteristics
         phif = np.zeros([num_z, num_r])
         iisat = np.zeros([num_z, num_r])
+        te = np.zeros([num_z, num_r])
         i=0
         chars=[]
         for z in range(num_z):
-            for r in range(num_r):    
+            for ir,r in enumerate(range(num_r)):
                 
                 char_filename=datadir+"/"+probechar_subdir+("/%04d-00.dat"%i)
                 #print(char_filename)
@@ -200,10 +222,66 @@ def runAnalysis(listOfAnalysisParameters):
                 iisat_here=np.interp(-30.0, char_data[:,0], char_data[:,1])
                 iisat[z,r]=iisat_here
                 
+                
+                #if z==num_z/2:
+                    # radial profile, vertically centered between electrodes
+                 #   r_profile_r.append(r)
+                    
+                    # indices up to floating potential + 1V
+                span = 12 # 8 works ok for most of the 0T data
+                lastIdx = np.where(char_data[:,0] < phif_here)[0][-1]
+                    
+                Uspan_n = 4.0
+                Uspan_p = 2.0
+                indices = np.where((char_data[:,0] > phif_here-Uspan_n)&(char_data[:,0] < phif_here+Uspan_p))[0]
+                
+                  #  plt.plot(char_data[lastIdx-span:lastIdx+span+2,0], char_data[lastIdx-span:lastIdx+span+2,1], ".", color="C"+str(ir%10), label="r="+str(r))
+                
+                    # fit linear model for ion saturation region plus exponential model for electron retardation region
+                    # starting values and fit
+                try:
+                    #result = Te_model.fit(char_data[lastIdx-span:lastIdx+span+2,1], x=char_data[lastIdx-span:lastIdx+span+2,0], I_ion=-1e-5, I_e=1e-5, T_e=2.0)
+                    result = Te_model.fit(char_data[indices,1], x=char_data[indices,0], I_ion=-1e-5, I_e=1e-5, T_e=2.0)
+                    te[z,r] = result.best_values['T_e']
+                except ValueError:
+                    te[z,r] = np.nan
+                    
+                    # print some debugging output of the fit
+                   # print(result.fit_report())    
+                    
+                    
+                    
+                  #  r_profile_Te.append(result.best_values['T_e'])
+
+                    # plot fit result
+                   # subset_l = char_data[lastIdx-span:lastIdx+span+2,0][-1]
+                   # subset_f = char_data[lastIdx-span:lastIdx+span+2,0][0]
+                   # subset_w = subset_l-subset_f
+                    
+                   # x_eval = np.linspace(subset_f-subset_w*0.05, subset_l+subset_w*0.05, 100)
+                    
+                    
+                   # plt.plot(x_eval, result.eval(x=x_eval), color="C"+str(ir%10))
+                    
+                    
+                
+                
+                
+                
                 i+=1
                 
-
-        
+#
+#        plt.xlabel("U / V")
+#        plt.ylabel("I / A")
+#        plt.legend(loc="upper left")
+#        plt.grid(True)
+#        
+#        plt.figure()
+#        plt.plot(r_profile_r, r_profile_Te, ".-", label="Te")
+#        plt.xlabel("r / m")
+#        plt.ylabel("Te / eV")
+#        plt.grid(True)
+#        plt.legend(loc="best")
         
 #        def onclick(event):
 #        #    print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
@@ -229,47 +307,70 @@ def runAnalysis(listOfAnalysisParameters):
         
         
         
-        #fig=plt.figure()     
-        #plt.imshow(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[r_meshgrid[z0,0]-1, r_meshgrid[z0,-1]+1, z_meshgrid[z0,0]+1, z_meshgrid[-1,0]-1])
-        #plt.contourf(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmap=my_cmap)
-        #plt.pcolormesh(cornersX, cornersY, phif, cmap=my_cmap)
-        plt.figure()
-        CS=plt.contourf(gridX, gridY, phif, cmap=plt.get_cmap(my_cmap), levels=contourLevels_PhiF+1, vmin=minPhiF, vmax=maxPhiF)
-        m = cm.ScalarMappable(cmap=my_cmap) # from https://stackoverflow.com/questions/43150687/colorbar-limits-are-not-respecting-set-vmin-vmax-in-plt-contourf-how-can-i-more
-        m.set_array(phif)
-        m.set_clim(minPhiF, maxPhiF)
-        cb=plt.colorbar(m, boundaries=np.linspace(minPhiF, maxPhiF, contourLevels_PhiF))
-#        cb = clippedcolorbar(CS, extend='neither')
-        cb.formatter.set_scientific(True)
-        cb.formatter.set_powerlimits((-2,2))
-        cb.update_ticks() 
-        cb.set_label("floating potential / V")
-        plt.xlabel("r / mm")
-        plt.ylabel("z / mm")
-        plotElectrodes(plt)
-        plt.axis("equal")
-        plt.xlim([minR, maxR])
-        plt.ylim([minZ, maxZ])
-        plt.title(magFieldLabel)
-        plt.tight_layout()
-        plt.savefig(outDir+"/PhiF_"+outputSuffix+".png")
-#        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+#        #fig=plt.figure()     
+#        #plt.imshow(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[r_meshgrid[z0,0]-1, r_meshgrid[z0,-1]+1, z_meshgrid[z0,0]+1, z_meshgrid[-1,0]-1])
+#        #plt.contourf(np.flipud(phif[z0:,:]), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmap=my_cmap)
+#        #plt.pcolormesh(cornersX, cornersY, phif, cmap=my_cmap)
+#        plt.figure()
+#        plt.contourf(gridX, gridY, phif, cmap=plt.get_cmap(my_cmap), levels=contourLevels_PhiF+1, vmin=minPhiF, vmax=maxPhiF)
+#        m = cm.ScalarMappable(cmap=my_cmap) # from https://stackoverflow.com/questions/43150687/colorbar-limits-are-not-respecting-set-vmin-vmax-in-plt-contourf-how-can-i-more
+#        m.set_array(phif)
+#        m.set_clim(minPhiF, maxPhiF)
+#        cb=plt.colorbar(m, boundaries=np.linspace(minPhiF, maxPhiF, contourLevels_PhiF))
+##        cb = clippedcolorbar(CS, extend='neither')
+#        cb.formatter.set_scientific(True)
+#        cb.formatter.set_powerlimits((-2,2))
+#        cb.update_ticks() 
+#        cb.set_label("floating potential / V")
+#        plt.xlabel("r / mm")
+#        plt.ylabel("z / mm")
+#        plotElectrodes(plt)
+#        plt.axis("equal")
+#        plt.xlim([minR, maxR])
+#        plt.ylim([minZ, maxZ])
+#        plt.title(magFieldLabel)
+#        plt.tight_layout()
+#        plt.savefig(outDir+"/PhiF_"+outputSuffix+".png")
+##        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+#        
+#        #fig2=plt.figure()     
+#        #plt.imshow(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[r_meshgrid[z0,0], r_meshgrid[z0,-1], z_meshgrid[z0,0], z_meshgrid[-1,0]])
+#        #plt.contourf(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmp=my_cmap)
+#        plt.figure()
+#        #plt.pcolormesh(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), vmin=minIisat, vmax=maxIisat)
+#        plt.contourf(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), levels=contourLevels_Iisat+1, vmin=minIisat, vmax=maxIisat)
+#        m = cm.ScalarMappable(cmap=my_cmap)
+#        m.set_array(iisat*-1e6)
+#        m.set_clim(minIisat, maxIisat)
+#        cb=plt.colorbar(m, boundaries=np.linspace(minIisat, maxIisat, contourLevels_Iisat))
+##        cb = clippedcolorbar(CS, extend='neither')
+#        cb.formatter.set_scientific(True)
+#        cb.formatter.set_powerlimits((-2,2))
+#        cb.update_ticks() 
+#        cb.set_label("ion saturation current (at -30V) / uA")
+#        plt.xlabel("r / mm")
+#        plt.ylabel("z / mm")
+#        plotElectrodes(plt)
+#        plt.axis("equal")
+#        plt.xlim([minR, maxR])
+#        plt.ylim([minZ, maxZ])
+#        plt.title(magFieldLabel)
+#        plt.tight_layout()
+#        plt.savefig(outDir+"/Iisat_"+outputSuffix+".png")
+##        cid = fig2.canvas.mpl_connect('button_press_event', onclick)
         
-        #fig2=plt.figure()     
-        #plt.imshow(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[r_meshgrid[z0,0], r_meshgrid[z0,-1], z_meshgrid[z0,0], z_meshgrid[-1,0]])
-        #plt.contourf(np.flipud(iisat[z0:,:]*-1e6), interpolation="nearest", extent=[gridX[z0,0]-1, gridX[z0,-1]+1, gridY[z0,0]+1, gridY[-1,0]-1], levels=20, cmp=my_cmap)
+        
         plt.figure()
-        #plt.pcolormesh(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), vmin=minIisat, vmax=maxIisat)
-        CS=plt.contourf(gridX, gridY, iisat*-1e6, cmap=plt.get_cmap(my_cmap), levels=contourLevels_Iisat+1, vmin=minIisat, vmax=maxIisat)
+        plt.contourf(gridX, gridY, te, cmap=plt.get_cmap(my_cmap), levels=contourLevels_Te+1, vmin=minTe, vmax=maxTe)
         m = cm.ScalarMappable(cmap=my_cmap)
-        m.set_array(iisat*-1e6)
-        m.set_clim(minIisat, maxIisat)
-        cb=plt.colorbar(m, boundaries=np.linspace(minIisat, maxIisat, contourLevels_Iisat))
+        m.set_array(te)
+        m.set_clim(minTe, maxTe)
+        cb=plt.colorbar(m, boundaries=np.linspace(minTe, maxTe, contourLevels_Te))
 #        cb = clippedcolorbar(CS, extend='neither')
         cb.formatter.set_scientific(True)
         cb.formatter.set_powerlimits((-2,2))
         cb.update_ticks() 
-        cb.set_label("ion saturation current (at -30V) / uA")
+        cb.set_label("T_e / eV")
         plt.xlabel("r / mm")
         plt.ylabel("z / mm")
         plotElectrodes(plt)
@@ -278,8 +379,7 @@ def runAnalysis(listOfAnalysisParameters):
         plt.ylim([minZ, maxZ])
         plt.title(magFieldLabel)
         plt.tight_layout()
-        plt.savefig(outDir+"/Iisat_"+outputSuffix+".png")
-#        cid = fig2.canvas.mpl_connect('button_press_event', onclick)
+        plt.savefig(outDir+"/Te_"+outputSuffix+".png")
 
 
 runAnalysis(listOfAnalysisParameters)
