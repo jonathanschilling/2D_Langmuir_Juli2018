@@ -1,5 +1,4 @@
 # 2D_Langmuir_Juli2018
-by Jonathan Schilling (jonathan.schilling@ipp.mpg.de)
 
 analysis software for Langmuir probe measurements done in July 2018
 
